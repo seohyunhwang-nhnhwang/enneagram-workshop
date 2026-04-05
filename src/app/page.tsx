@@ -15,8 +15,10 @@ export default function Home() {
     try {
       const code = await createRoom();
       router.push(`/host/${code}`);
-    } catch {
-      setError("방 생성에 실패했습니다. 다시 시도해주세요.");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(`방 생성 실패: ${msg}`);
+      console.error("createRoom error:", e);
     } finally {
       setLoading(false);
     }
