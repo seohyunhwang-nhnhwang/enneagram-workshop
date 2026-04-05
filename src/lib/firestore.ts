@@ -1,14 +1,4 @@
-import {
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  collection,
-  onSnapshot,
-  query,
-  getDocs,
-} from "firebase/firestore";
-import { db } from "./firebase";
+import { getApp } from "./firebase";
 
 function generateRoomCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -33,7 +23,14 @@ export interface Participant {
   answers: Record<string, string>;
 }
 
+async function getDb() {
+  const { getFirestore } = await import("firebase/firestore");
+  return getFirestore(getApp());
+}
+
 export async function createRoom(): Promise<string> {
+  const { doc, setDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const code = generateRoomCode();
   const roomRef = doc(db, "rooms", code);
   await setDoc(roomRef, {
@@ -46,6 +43,8 @@ export async function createRoom(): Promise<string> {
 }
 
 export async function getRoom(code: string): Promise<Room | null> {
+  const { doc, getDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const roomRef = doc(db, "rooms", code);
   const snap = await getDoc(roomRef);
   if (!snap.exists()) return null;
@@ -56,12 +55,18 @@ export function onRoomChange(
   code: string,
   callback: (room: Room) => void
 ): () => void {
-  const roomRef = doc(db, "rooms", code);
-  return onSnapshot(roomRef, (snap) => {
-    if (snap.exists()) {
-      callback(snap.data() as Room);
-    }
-  });
+  let unsub = () => {};
+  (async () => {
+    const { doc, onSnapshot } = await import("firebase/firestore");
+    const db = await getDb();
+    const roomRef = doc(db, "rooms", code);
+    unsub = onSnapshot(roomRef, (snap) => {
+      if (snap.exists()) {
+        callback(snap.data() as Room);
+      }
+    });
+  })();
+  return () => unsub();
 }
 
 export async function joinRoom(
@@ -69,6 +74,8 @@ export async function joinRoom(
   name: string,
   enneagramType: number
 ): Promise<string> {
+  const { doc, setDoc, collection } = await import("firebase/firestore");
+  const db = await getDb();
   const participantRef = doc(collection(db, "rooms", code, "participants"));
   const id = participantRef.id;
   await setDoc(participantRef, {
@@ -86,6 +93,8 @@ export async function submitAnswer(
   questionId: string,
   answer: string
 ): Promise<void> {
+  const { doc, updateDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const participantRef = doc(
     db,
     "rooms",
@@ -99,6 +108,8 @@ export async function submitAnswer(
 }
 
 export async function nextQuestion(code: string): Promise<void> {
+  const { doc, getDoc, updateDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const roomRef = doc(db, "rooms", code);
   const snap = await getDoc(roomRef);
   if (!snap.exists()) return;
@@ -110,11 +121,15 @@ export async function nextQuestion(code: string): Promise<void> {
 }
 
 export async function showResults(code: string): Promise<void> {
+  const { doc, updateDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const roomRef = doc(db, "rooms", code);
   await updateDoc(roomRef, { status: "reviewing" });
 }
 
 export async function backToPlaying(code: string): Promise<void> {
+  const { doc, updateDoc } = await import("firebase/firestore");
+  const db = await getDb();
   const roomRef = doc(db, "rooms", code);
   await updateDoc(roomRef, { status: "playing" });
 }
@@ -123,24 +138,18 @@ export function onParticipantsChange(
   code: string,
   callback: (participants: Participant[]) => void
 ): () => void {
-  const q = query(collection(db, "rooms", code, "participants"));
-  return onSnapshot(q, (snap) => {
-    const participants: Participant[] = [];
-    snap.forEach((doc) => {
-      participants.push(doc.data() as Participant);
+  let unsub = () => {};
+  (async () => {
+    const { collection, query, onSnapshot } = await import("firebase/firestore");
+    const db = await getDb();
+    const q = query(collection(db, "rooms", code, "participants"));
+    unsub = onSnapshot(q, (snap) => {
+      const participants: Participant[] = [];
+      snap.forEach((doc) => {
+        participants.push(doc.data() as Participant);
+      });
+      callback(participants);
     });
-    callback(participants);
-  });
-}
-
-export async function getParticipants(
-  code: string
-): Promise<Participant[]> {
-  const q = query(collection(db, "rooms", code, "participants"));
-  const snap = await getDocs(q);
-  const participants: Participant[] = [];
-  snap.forEach((doc) => {
-    participants.push(doc.data() as Participant);
-  });
-  return participants;
+  })();
+  return () => unsub();
 }
