@@ -135,7 +135,7 @@ export default function HostPage({
             <span className="badge bg-purple-100 text-purple-700 mb-2">
               Q{room.currentQuestion + 1} / {QUESTIONS.length}
             </span>
-            <h2 className="text-lg font-semibold leading-relaxed">
+            <h2 className="text-lg font-semibold leading-relaxed whitespace-pre-wrap">
               {currentQ.emoji} {currentQ.title}
             </h2>
           </div>
@@ -234,11 +234,11 @@ export default function HostPage({
           <div className="text-4xl mb-3 text-center">
             {currentQ?.emoji}
           </div>
-          <h2 className="text-lg font-semibold text-center leading-relaxed mb-2">
+          <h2 className="text-lg font-semibold text-center leading-relaxed mb-2 whitespace-pre-wrap">
             {currentQ?.title}
           </h2>
           {currentQ?.description && (
-            <p className="text-gray-400 text-sm text-center leading-relaxed">
+            <p className="text-gray-400 text-sm text-center leading-relaxed whitespace-pre-wrap">
               {currentQ.description}
             </p>
           )}

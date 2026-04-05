@@ -167,11 +167,11 @@ export default function PlayPage({
 
           <div className="card">
             <div className="text-3xl mb-3 text-center">{currentQ.emoji}</div>
-            <h2 className="text-lg font-semibold mb-2 text-center leading-relaxed">
+            <h2 className="text-lg font-semibold mb-2 text-center leading-relaxed whitespace-pre-wrap">
               {currentQ.title}
             </h2>
             {currentQ.description && (
-              <p className="text-gray-400 text-sm text-center mb-4 leading-relaxed">
+              <p className="text-gray-400 text-sm text-center mb-4 leading-relaxed whitespace-pre-wrap">
                 {currentQ.description}
               </p>
             )}

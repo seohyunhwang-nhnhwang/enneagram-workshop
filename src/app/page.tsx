@@ -14,14 +14,11 @@ export default function Home() {
     setLoading(true);
     setError("");
     try {
-      alert("방 생성 시작...");
       const code = await createRoom();
-      alert(`방 생성 성공! 코드: ${code}`);
       router.push(`/host/${code}`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? `${e.message}\n${e.stack}` : String(e);
       setError(`방 생성 실패: ${msg}`);
-      alert(`방 생성 실패: ${msg}`);
       console.error("createRoom error:", e);
     } finally {
       setLoading(false);
